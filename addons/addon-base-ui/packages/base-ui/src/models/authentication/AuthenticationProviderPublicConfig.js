@@ -63,6 +63,9 @@ const AuthenticationProviderPublicConfig = types
     credentialHandlingType: '',
     signInUri: '',
     signOutUri: '',
+    keyCloakClientId: '',
+    keyCloakRealm: '',  
+    keyCloakAuthUrl: '',   
     enableNativeUserPoolUsers: types.maybeNull(types.boolean),
   })
   .actions(self => ({
@@ -119,6 +122,12 @@ const AuthenticationProviderPublicConfig = types
           // complete by the "initialization-plugin"
           window.location = self.absoluteSignInUrl;
         }
+        if (self.credentialHandlingType === 'keycloak') {
+          console.log('AuthenticationProviderPublicConfig mingtong step !');  
+ 
+          //初始化keycloak
+          window._keycloak.login();
+        }
       } catch (err) {
         handleException(err);
       }
@@ -150,6 +159,10 @@ const AuthenticationProviderPublicConfig = types
           explicitLogout: true,
           autoLogout,
         });
+        window._keycloak.logout();
+        localStorage.setItem('keycloak_token', '');
+        localStorage.setItem('keycloak_clientId', '');
+        localStorage.setItem('keycloak_refreshToken', '');        
       }
     },
   }))

@@ -44,6 +44,9 @@ postDeployment:
     APP_NATIVE_ADMIN_PASSWORD_PARAM_NAME: ${self:custom.settings.nativeAdminPasswordParamName}
     APP_ENV_NAME: ${self:custom.settings.envName}
     APP_AWS_DOMAIN: ${self:custom.settings.awsDomain}
+    APP_KEYCLOAK_REALM: ${self:custom.settings.keyCloakRealm}
+    APP_KEYCLOAK_URL: ${self:custom.settings.keyCloakUrl}
+    APP_KEYCLOAK_CLIENTID: ${self:custom.settings.keyCloakClientId}     
     
 
 egressStoreObjectsHandler:

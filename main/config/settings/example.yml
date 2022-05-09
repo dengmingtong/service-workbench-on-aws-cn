@@ -110,3 +110,23 @@
 # China Mainland regions: 'amazonaws.com.cn'
 # Global regions: 'amazonaws.com'
 # awsDomain: amazonaws.com
+
+# keycloak realm, it should be configured before deploying service workbench
+# keyCloakRealm: swb-realm
+
+# keycloak client id, it should be configured before deploying service workbench
+# keyCloakClientId: client-id
+
+# keycloak url, keycloak should be deployed before deploying service workbench
+# keyCloakUrl: https://keycloak.com
+
+# root user email, the root user should be created in installed keycloak before deploying service workbench
+# rootUserEmail: root@example.com
+
+# Root user's first name
+# rootUserFirstName: root
+# Root user's last name
+# rootUserLastName: root
+
+# For China Mainland regions, we should have a R53 domain before deploying service workbench
+# websiteR53Url: https://example.com

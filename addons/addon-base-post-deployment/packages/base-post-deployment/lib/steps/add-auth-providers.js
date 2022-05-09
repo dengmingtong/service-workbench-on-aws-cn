@@ -31,6 +31,9 @@ const settingKeys = {
   defaultAuthNProviderTitle: 'defaultAuthNProviderTitle',
   cognitoAuthNProviderTitle: 'cognitoAuthNProviderTitle',
   cognitoUserPoolDomainPrefix: 'cognitoUserPoolDomainPrefix',
+  keyCloakUrl: 'keyCloakUrl',
+  keyCloakRealm: 'keyCloakRealm',
+  keyCloakClientId: 'keyCloakClientId',
 };
 
 class AddAuthProviders extends Service {
@@ -40,7 +43,8 @@ class AddAuthProviders extends Service {
       'aws',
       'authenticationProviderConfigService',
       'authenticationProviderTypeService',
-      'cognitoUserPoolAuthenticationProvisionerService',
+      // 'cognitoUserPoolAuthenticationProvisionerService',
+      'keycloakAuthenticationProvisionerService',
     ]);
   }
 
@@ -153,10 +157,50 @@ class AddAuthProviders extends Service {
     });
   }
 
+  /**
+   * Configure keycloak Authentication Provider. The step method below invokes the keycloak auth provider "Provisioner" service.
+   * The service will add keycloak config to dynamodb.
+   */
+   async addKeyCloakAuthenticationProvider() {
+    // Get settings
+    const keyCloakRealm = this.settings.get(settingKeys.keyCloakRealm);
+    const keyCloakUrl = this.settings.get(settingKeys.keyCloakUrl);
+    const keyCloakClientId = this.settings.get(settingKeys.keyCloakClientId);
+
+    const keycloakAuthProviderConfig = {
+      title: 'keycloak',
+      id: `${keyCloakUrl}/auth/realms/${keyCloakRealm}`,
+      type: "keycloak",
+      keyCloakRealm: keyCloakRealm,
+      keyCloakAuthUrl: `${keyCloakUrl}/auth/`,
+      enableNativeUserPoolUsers: true,
+      keyCloakClientId: keyCloakClientId     
+    };
+    // Define auth provider type config
+    const authenticationProviderTypeService = await this.service('authenticationProviderTypeService');
+    const authenticationProviderTypes = await authenticationProviderTypeService.getAuthenticationProviderTypesKeyCloak(
+      getSystemRequestContext(),
+    );
+
+    const keycloakAuthProviderTypeConfig = _.find(authenticationProviderTypes, {
+      type: authProviderConstants.keycloakAuthProviderTypeId,
+    });
+     
+    const keycloakAuthenticationProvisionerService = await this.service(
+      'keycloakAuthenticationProvisionerService',
+    );
+
+    await keycloakAuthenticationProvisionerService.provision({
+      providerTypeConfig: keycloakAuthProviderTypeConfig,
+      providerConfig: keycloakAuthProviderConfig
+    });
+  }   
+
   async execute() {
     // Setup both the default (internal) auth provider as well as a Cognito
     // auth provider (if configured)
     // await this.addCognitoAuthenticationProviderWithSamlFederation();
+    await this.addKeyCloakAuthenticationProvider();
   }
 }
 

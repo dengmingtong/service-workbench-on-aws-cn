@@ -48,12 +48,18 @@ const consoleLogger = {
 
 module.exports = function newHandler({ authenticationService = noopAuthenticationService, log = consoleLogger } = {}) {
   return async ({ methodArn: rawMethodArn, authorizationToken }) => {
+    log.info('lambda auth newHandler mingtong step 1');
+    log.info('lambda auth newHandler mingtong step 1, rawMethodArn: ', rawMethodArn);
     const methodArn = parseMethodArn(rawMethodArn);
+    log.info('lambda auth newHandler mingtong step 2, methodArn: ', methodArn);
     if (!methodArn) {
       throw new Error(`invalid method arn: ${rawMethodArn}`);
     }
+    log.info('lambda auth newHandler mingtong step 3, authorizationToken: ', authorizationToken);
     const token = getToken(authorizationToken);
+    log.info('lambda auth newHandler mingtong step 4, token: ', token);
     const result = await authenticationService.authenticate(token);
+    log.info('lambda auth newHandler mingtong step 5-1, result: ', result);
     const { authenticated, error, ...claims } = result;
     if (error) {
       log.info(

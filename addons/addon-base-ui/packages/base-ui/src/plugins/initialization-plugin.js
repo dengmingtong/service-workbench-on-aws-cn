@@ -29,7 +29,7 @@ const AUTHN_EXTENSION_POINT = 'authentication';
  */
 async function init(payload, appContext) {
   const { authentication, authenticationProviderPublicConfigsStore, pluginRegistry } = appContext;
-
+  console.log('plugin init mingtong step 1');
   await authenticationProviderPublicConfigsStore.load();
 
   const tokenInfo = await authentication.getIdTokenInfo();

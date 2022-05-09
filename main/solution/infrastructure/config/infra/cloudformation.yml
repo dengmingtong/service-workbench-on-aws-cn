@@ -247,11 +247,11 @@ Resources:
               Forward: none
           ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_All
-        Logging: !If
-          - IsHongkongRegion
-          - !Ref AWS::NoValue
-          - Bucket: ${self:custom.settings.loggingBucketName}.s3.${self:custom.settings.awsDomain}
-            Prefix: cloudfront/
+        # Logging: !If
+        #   - IsHongkongRegion
+        #   - !Ref AWS::NoValue
+        #   - Bucket: ${self:custom.settings.loggingBucketName}.s3.${self:custom.settings.awsDomain}
+        #     Prefix: cloudfront/
 
 
   CloudFrontOAI:

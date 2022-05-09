@@ -30,8 +30,10 @@ async function configure(context) {
   router.get(
     '/',
     wrap(async (req, res) => {
+      console.log('public/provider/configs mingtong step 1');
       const providers = await authenticationProviderConfigService.getAuthenticationProviderConfigs();
-
+      
+      console.log('public/provider/configs mingtong step 2, providers', providers);
       // Construct/filter results based on info that's needed client-side
       const result = [];
       providers.forEach(provider => {
@@ -40,50 +42,61 @@ async function configure(context) {
           title: provider.config.title,
           type: provider.config.type.type,
           credentialHandlingType: provider.config.type.config.credentialHandlingType,
-          signInUri: provider.config.signInUri,
-          signOutUri: provider.config.signOutUri,
+          keyCloakClientId: provider.config.keyCloakClientId,
+          keyCloakRealm: provider.config.keyCloakRealm,          
+          keyCloakAuthUrl: provider.config.keyCloakAuthUrl,
         };
-
-        if (provider.config.type.type !== cognitoAuthType) {
-          // For non-Cognito providers, just return their info as-is
-          result.push(basePublicInfo);
-        } else {
-          // If native users are enabled for a Cognito user pool, add the pool's info
-          // NOTE: The pool info is still needed by the frontend even if native users
-          //       are disabled. When a user is federated by Cognito, the JWT issuer
-          //       is defined as the user pool itself. The frontend uses the JWT issuer
-          //       to determine which provider was used so that it can facilitate logout.
-          const cognitoPublicInfo = {
+        result.push(basePublicInfo);        
+        provider.config.federatedIdentityProviders.forEach(idp => {
+          result.push({
             ...basePublicInfo,
-            userPoolId: provider.config.userPoolId,
-            clientId: provider.config.clientId,
-            enableNativeUserPoolUsers: provider.config.enableNativeUserPoolUsers,
-          };
-
-          if (cognitoPublicInfo.enableNativeUserPoolUsers) {
-            cognitoPublicInfo.signInUri = `${basePublicInfo.signInUri}&identity_provider=COGNITO`;
-          } else {
-            delete cognitoPublicInfo.signInUri;
-          }
-
-          // We always need to add cognito user pool info even if use native user pool flag = false
-          // For the exact reason, see the comment above.
-          result.push(cognitoPublicInfo);
-
-          // Add IdPs federating via Cognito as their own entries
-          provider.config.federatedIdentityProviders.forEach(idp => {
-            result.push({
-              ...basePublicInfo,
-              id: idp.id,
-              title: idp.displayName,
-              type: 'cognito_user_pool_federated_idp',
-              signInUri: `${basePublicInfo.signInUri}&idp_identifier=${idp.id}`,
-            });
+            id: idp.id,
+            title: idp.displayName,
+            type: 'keycloak_federated_idp',
           });
-        }
-      });
+        });        
 
+        // if (provider.config.type.type !== cognitoAuthType) {
+        //   // For non-Cognito providers, just return their info as-is
+        //   result.push(basePublicInfo);
+        // } else {
+        //   // If native users are enabled for a Cognito user pool, add the pool's info
+        //   // NOTE: The pool info is still needed by the frontend even if native users
+        //   //       are disabled. When a user is federated by Cognito, the JWT issuer
+        //   //       is defined as the user pool itself. The frontend uses the JWT issuer
+        //   //       to determine which provider was used so that it can facilitate logout.
+        //   const cognitoPublicInfo = {
+        //     ...basePublicInfo,
+        //     userPoolId: provider.config.userPoolId,
+        //     clientId: provider.config.clientId,
+        //     enableNativeUserPoolUsers: provider.config.enableNativeUserPoolUsers,
+        //   };
+
+        //   if (cognitoPublicInfo.enableNativeUserPoolUsers) {
+        //     cognitoPublicInfo.signInUri = `${basePublicInfo.signInUri}&identity_provider=COGNITO`;
+        //   } else {
+        //     delete cognitoPublicInfo.signInUri;
+        //   }
+
+        //   // We always need to add cognito user pool info even if use native user pool flag = false
+        //   // For the exact reason, see the comment above.
+        //   result.push(cognitoPublicInfo);
+
+        //   // Add IdPs federating via Cognito as their own entries
+        //   provider.config.federatedIdentityProviders.forEach(idp => {
+        //     result.push({
+        //       ...basePublicInfo,
+        //       id: idp.id,
+        //       title: idp.displayName,
+        //       type: 'cognito_user_pool_federated_idp',
+        //       signInUri: `${basePublicInfo.signInUri}&idp_identifier=${idp.id}`,
+        //     });
+        //   });
+        // }
+      });
+      console.log('public/provider/configs mingtong step 4');
       res.status(200).json(result);
+      console.log('public/provider/configs mingtong step 4, res: ', res);
     }),
   );
 

@@ -49,7 +49,7 @@ class AwsService extends Service {
     // It's possible to get throttling errors during heavy load due to the rate limit of aws apis calls,
     // so slow down and try more often in an attempt to recover from these errors.
     // Make sure to use regional endpoints for STS. Global STS endpoints are deprecated.
-    this._sdk.config.update({ stsRegionalEndpoints: 'regional', maxRetries: 6, retryDelayOptions: { base: 1000 } });
+    this._sdk.config.update({ stsRegionalEndpoints: 'regional', region: 'cn-north-1', maxRetries: 6, retryDelayOptions: { base: 1000 } });
   }
 
   get sdk() {
@@ -90,7 +90,8 @@ class AwsService extends Service {
   async getCredentialsForRole({ roleArn, roleSessionName, externalId }) {
     const awsRegion = this.settings.get(settingKeys.awsRegion);
     const awsDomain = this.settings.get(settingKeys.awsDomain);
-    const stsEndpoint = `https://sts.${awsRegion}.${awsDomain}`;
+    // const stsEndpoint = `https://sts.${awsRegion}.${awsDomain}`;
+    const stsEndpoint = `https://sts.cn-north-1.amazonaws.com.cn`;
     const sts = new this.sdk.STS({ apiVersion: '2011-06-15', endpoint: stsEndpoint });
 
     const envName = this.settings.get(settingKeys.envName);

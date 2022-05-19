@@ -15,7 +15,6 @@
 
 const CreateUserRoles = require('../steps/create-user-roles');
 const InjectServiceEndpoint = require('../steps/inject-service-endpoint');
-const CreateCloudFrontInterceptor = require('../steps/create-cloudfront-interceptor');
 const CreateServiceCatalogPortfolio = require('../steps/create-service-catalog-portfolio');
 /**
  * Returns a map of post deployment steps
@@ -35,7 +34,6 @@ async function getSteps(existingStepsMap, pluginRegistry) {
     ['createUserRoles', new CreateUserRoles()],
     ...existingStepsMap,
     ['injectServiceEndpoint', new InjectServiceEndpoint()],
-    ['createCloudFrontInterceptor', new CreateCloudFrontInterceptor()],
     ['createServiceCatalogPortfolio', new CreateServiceCatalogPortfolio()],
   ]);
 

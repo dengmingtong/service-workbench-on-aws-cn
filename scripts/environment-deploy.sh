@@ -54,7 +54,6 @@ $EXEC sls invoke -f preDeployment -s "$STAGE"
 popd > /dev/null
 
 componentDeploy "backend" "Backend"
-componentDeploy "edge-lambda" "Edge-Lambda"
 componentDeploy "post-deployment" "Post-Deployment"
 goComponentDeploy "environment-tools" "Environment-Tools"
 

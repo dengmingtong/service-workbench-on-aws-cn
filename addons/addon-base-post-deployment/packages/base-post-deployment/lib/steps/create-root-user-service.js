@@ -30,6 +30,10 @@ const settingKeys = {
   nativeAdminPasswordParamName: 'nativeAdminPasswordParamName',
   enableNativeUserPoolUsers: 'enableNativeUserPoolUsers',
   awsRegion: 'awsRegion',
+  defaultIdpType: 'defaultIdpType',
+  keyCloakRealm: 'keyCloakRealm',
+  keyCloakClientId: 'keyCloakClientId',
+  keyCloakUrl: 'keyCloakUrl',
 };
 
 class CreateRootUserService extends Service {
@@ -38,7 +42,7 @@ class CreateRootUserService extends Service {
     this.dependency(['userService', 'dbPasswordService', 'aws']);
   }
 
-  async createNativeAdminUser() {
+  async createCognitoNativeAdminUser() {
     if (!this.settings.getBoolean(settingKeys.enableNativeUserPoolUsers)) {
       this.log.info('Cognito Native User Pool is turned off for this installation. Skipping initial admin creation');
       return;
@@ -175,6 +179,45 @@ class CreateRootUserService extends Service {
     }
   }
 
+  async createKeycloakNativeAdminUser() {
+    console.log('CreateKeycloakRootUserService createNativeAdminUser mingtong step 1');
+    const adminUserEmail = this.settings.get(settingKeys.rootUserEmail);
+    const adminUserFirstName = this.settings.get(settingKeys.rootUserFirstName);
+    const adminUserLastName = this.settings.get(settingKeys.rootUserLastName);
+    const keyCloakRealm = this.settings.get(settingKeys.keyCloakRealm);
+    const keyCloakUrl = this.settings.get(settingKeys.keyCloakUrl);
+    const keyCloakClientId = this.settings.get(settingKeys.keyCloakClientId);
+    const defaultIdpType = this.settings.get(settingKeys.defaultIdpType);
+
+    console.log('CreateKeycloakRootUserService createNativeAdminUser mingtong step 2');
+    try {
+      await this.createUser({
+        username: adminUserEmail,
+        authenticationProviderId: `${keyCloakUrl}/auth/realms/${keyCloakRealm}`,
+        identityProviderName: defaultIdpType,
+        firstName: adminUserFirstName,
+        lastName: adminUserLastName,
+        email: adminUserEmail,
+        isAdmin: true,
+        status: 'active',
+        userRole: 'admin',
+      });
+    } catch (err) {
+      if (err.code === 'alreadyExists') {
+        // The native admin already exists. Nothing to do.
+        this.log.info(
+          `The user with user name = ${adminUserEmail} already exists. Did NOT overwrite that user's information.`,
+        );
+      } else {
+        // In case of any other error let it bubble up
+        throw this.boom.internalError(
+          `There was a problem creating the default native user in DDB. Username: ${adminUserEmail}. Error code: ${err.code}`,
+          true,
+        );
+      }
+    }
+  }  
+
   async createUser(rawData) {
     const userService = await this.service('userService');
     return userService.createUser(getSystemRequestContext(), rawData);
@@ -203,7 +246,17 @@ class CreateRootUserService extends Service {
   }
 
   async execute() {
-    await this.createNativeAdminUser();
+    const defaultIdpType = this.settings.get(settingKeys.defaultIdpType);
+    switch (defaultIdpType) {
+      case 'keycloak':
+        await this.createKeycloakNativeAdminUser();
+        break;
+      case 'kognito':
+        await this.createCognitoNativeAdminUser();
+        break;
+      default:
+        console.log(`Sorry, we are out of ${defaultIdpType}.`);
+    }    
   }
 }
 

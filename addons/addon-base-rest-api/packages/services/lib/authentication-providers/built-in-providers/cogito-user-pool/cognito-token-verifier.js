@@ -50,7 +50,9 @@ async function getCognitoTokenVerifier(userPoolUri, logger = console) {
 
   const verify = async token => {
     // First attempt to decode token before attempting to verify the signature
+    console.log('cognito verify mingtong step 1, token', token);
     const decodedJwt = jwt.decode(token, { complete: true });
+    console.log('cognito verify mingtong step 2, decodedJwt', decodedJwt);
     if (!decodedJwt) {
       throw new Error('Not valid JWT token. Could not decode the token');
     }

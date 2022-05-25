@@ -15,6 +15,8 @@
 
 const cognitoAuthType = require('@amzn/base-api-services/lib/authentication-providers/built-in-providers/cogito-user-pool/type')
   .type;
+const keycloakAuthType = require('@amzn/base-api-services/lib/authentication-providers/built-in-providers/keycloak/type')
+  .type;  
 
 async function configure(context) {
   const router = context.router();
@@ -31,12 +33,13 @@ async function configure(context) {
     '/',
     wrap(async (req, res) => {
       const providers = await authenticationProviderConfigService.getAuthenticationProviderConfigs();
-
+      console.log('provider/configs migntong step 1, providers', providers);
       // Construct/filter results based on info that's needed client-side
       const result = [];
       providers.forEach(provider => {
         const basePublicInfo = {
           id: provider.config.id,
+          providerConfigId: provider.config.id,
           title: provider.config.title,
           type: provider.config.type.type,
           credentialHandlingType: provider.config.type.config.credentialHandlingType,
@@ -44,10 +47,7 @@ async function configure(context) {
           signOutUri: provider.config.signOutUri,
         };
 
-        if (provider.config.type.type !== cognitoAuthType) {
-          // For non-Cognito providers, just return their info as-is
-          result.push(basePublicInfo);
-        } else {
+        if (provider.config.type.type === cognitoAuthType) {
           // If native users are enabled for a Cognito user pool, add the pool's info
           // NOTE: The pool info is still needed by the frontend even if native users
           //       are disabled. When a user is federated by Cognito, the JWT issuer
@@ -79,10 +79,30 @@ async function configure(context) {
               type: 'cognito_user_pool_federated_idp',
               signInUri: `${basePublicInfo.signInUri}&idp_identifier=${idp.id}`,
             });
-          });
+          });        
+        } else if (provider.config.type.type === keycloakAuthType) {
+          const keycloakPublicInfo = {
+            ...basePublicInfo,
+            // enableNativeUserPoolUsers: provider.config.enableNativeUserPoolUsers,
+          };
+
+          result.push(keycloakPublicInfo);
+
+          // // Add IdPs federating via Keycloak as their own entries
+          // provider.config.federatedIdentityProviders.forEach(idp => {
+          //   result.push({
+          //     ...basePublicInfo,
+          //     id: idp.id,
+          //     title: idp.displayName,
+          //     type: 'keycloak_federated_idp',
+          //     signInUri: idp.borkerUri,
+          //   });
+          // });
+        } else {
+          // For non-Cognito/non-Keycloak providers, just return their info as-is
+          result.push(basePublicInfo);
         }
       });
-
       res.status(200).json(result);
     }),
   );

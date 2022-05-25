@@ -31,6 +31,14 @@ const settingKeys = {
   defaultAuthNProviderTitle: 'defaultAuthNProviderTitle',
   cognitoAuthNProviderTitle: 'cognitoAuthNProviderTitle',
   cognitoUserPoolDomainPrefix: 'cognitoUserPoolDomainPrefix',
+  keyCloakRealm: 'keyCloakRealm',
+  keyCloakClientId: 'keyCloakClientId',
+  keyCloakUrl: 'keyCloakUrl',
+  rootUserEmail: 'rootUserEmail',
+  rootUserFirstName: 'rootUserFirstName',
+  rootUserLastName: 'rootUserLastName',
+  defaultIdpType: 'defaultIdpType',
+  websiteUrl: 'websiteUrl',
 };
 
 class AddAuthProviders extends Service {
@@ -41,6 +49,7 @@ class AddAuthProviders extends Service {
       'authenticationProviderConfigService',
       'authenticationProviderTypeService',
       'cognitoUserPoolAuthenticationProvisionerService',
+      'keycloakAuthenticationProvisionerService',
     ]);
   }
 
@@ -154,10 +163,98 @@ class AddAuthProviders extends Service {
     });
   }
 
+  /**
+   * Configure Cognito Authentication Provider. The step method below invokes the cognito auth provider "Provisioner" service.
+   * The service will do the followings
+   * 1. Create cognito user pool, if it doesn't exist
+   * 2. Create and configure application client for this solution in the cognito user pool
+   * 3. Configure identity providers in the cognito user pool
+   * 4. Configure cognito user pool domain for the client application
+   */
+   async addKeycloakAuthenticationProviderWithSamlFederation() {
+
+    console.log('addKeycloakAuthenticationProviderWithSamlFederation mingtong step 1');
+    const defaultIdpType = this.settings.get(settingKeys.defaultIdpType);
+    const keyCloakRealm = this.settings.get(settingKeys.keyCloakRealm);
+    const keyCloakClientId = this.settings.get(settingKeys.keyCloakClientId);
+    const keyCloakUrl = this.settings.get(settingKeys.keyCloakUrl);
+    const websiteUrl = this.settings.get(settingKeys.websiteUrl);
+    const enableNativeUserPoolUsers = this.settings.getBoolean(settingKeys.enableNativeUserPoolUsers);
+
+    // // Construct base auth provider config
+    // const federatedIdentityProviders = await Promise.all(
+    //   fedIdpIds.map(async (idpId, idx) => {
+    //     return {
+    //       id: idpId,
+    //       name: fedIdpNames[idx],
+    //       displayName: fedIdpDisplayNames[idx],
+    //       borkerUri: `${keyCloakUrl}/realms/${keyCloakRealm}/broker/${idpId}/login?client_id=${keyCloakClientId}&redirect_uri=${websiteUrl}/&code_challenge_method=S256&code_challenge=TEMP_PKCE_VERIFIER&state=TEMP_STATE_VERIFIER&response_type=code`,
+    //     };
+    //   }),
+    // );  
+
+    const keycloakAuthProviderConfig = {
+      id: `${keyCloakUrl}/auth/realms/${keyCloakRealm}`,
+      title: defaultIdpType,
+      clientId: keyCloakClientId,
+      enableNativeUserPoolUsers,
+      // federatedIdentityProviders,
+    };
+
+    // console.log('addKeycloakAuthenticationProviderWithSamlFederation mingtong step 2, federatedIdentityProviders', federatedIdentityProviders);      
+    console.log('addKeycloakAuthenticationProviderWithSamlFederation mingtong step 2, keycloakAuthProviderConfig', keycloakAuthProviderConfig);      
+
+    // Define auth provider type config
+    const authenticationProviderTypeService = await this.service('authenticationProviderTypeService');
+    const authenticationProviderTypes = await authenticationProviderTypeService.getAuthenticationProviderTypes(
+      getSystemRequestContext(),
+    );
+
+    console.log('addKeycloakAuthenticationProviderWithSamlFederation mingtong step 3, authenticationProviderTypes', authenticationProviderTypes);
+    const keycloakAuthProviderTypeConfig = _.find(authenticationProviderTypes, {
+      type: authProviderConstants.keycloakAuthProviderTypeId,
+    });
+
+    let authProviderExists = false;
+    const authenticationProviderConfigService = await this.service('authenticationProviderConfigService');
+    authProviderExists = !!(await authenticationProviderConfigService.getAuthenticationProviderConfig(
+      keycloakAuthProviderConfig.id,
+    ));
+
+    console.log('addKeycloakAuthenticationProviderWithSamlFederation mingtong step 4');
+
+    // Create or update user pool
+    const action = authProviderExists
+      ? authProviderConstants.provisioningAction.update
+      : authProviderConstants.provisioningAction.create;
+
+    const keycloakAuthenticationProvisionerService = await this.service(
+      'keycloakAuthenticationProvisionerService',
+    );
+    console.log('addKeycloakAuthenticationProviderWithSamlFederation mingtong step 5, keycloakAuthProviderTypeConfig', keycloakAuthProviderTypeConfig);
+    console.log('addKeycloakAuthenticationProviderWithSamlFederation mingtong step 5, keycloakAuthProviderConfig', keycloakAuthProviderConfig);
+    console.log('addKeycloakAuthenticationProviderWithSamlFederation mingtong step 5, action', action);
+    await keycloakAuthenticationProvisionerService.provision({
+      providerTypeConfig: keycloakAuthProviderTypeConfig,
+      providerConfig: keycloakAuthProviderConfig,
+      action,
+    });
+  }  
+
   async execute() {
-    // Setup both the default (internal) auth provider as well as a Cognito
-    // auth provider (if configured)
-    await this.addCognitoAuthenticationProviderWithSamlFederation();
+    // Setup auth provider according to defaultIdpType config
+    // federated IdP auth provider (if configured)
+    const defaultIdpType = this.settings.get(settingKeys.defaultIdpType);
+    switch (defaultIdpType) {
+      case 'keycloak':
+        await this.addKeycloakAuthenticationProviderWithSamlFederation();
+        break;
+      case 'cognito':
+        await this.addCognitoAuthenticationProviderWithSamlFederation();
+        break;
+      default:
+        console.log(`Sorry, we are out of ${defaultIdpType}.`);
+    } 
   }
 }
 

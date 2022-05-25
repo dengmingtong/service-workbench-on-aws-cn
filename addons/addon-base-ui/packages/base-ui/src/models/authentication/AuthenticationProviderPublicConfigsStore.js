@@ -29,6 +29,7 @@ const AuthenticationProviderPublicConfigsStore = BaseStore.named('Authentication
 
       self.runInAction(() => {
         self.authenticationProviderPublicConfigs = configs;
+        console.log('AuthenticationProviderPublicConfigsStore mingtong step 1, self.authenticationProviderPublicConfigs', self.authenticationProviderPublicConfigs);
         const authentication = getEnv(self).authentication;
         const selected = _.get(configs, '[0].id', '');
         authentication.setSelectedAuthenticationProviderId(selected);

@@ -225,6 +225,7 @@ function logout() {
 }
 
 function getIdToken(data = {}) {
+  console.log('api getIdToken mingtong step 1 data', data)  
   return httpApiPost('api/authentication/id-tokens', { data });
 }
 

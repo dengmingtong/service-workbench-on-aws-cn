@@ -111,8 +111,8 @@
 # Global regions: 'amazonaws.com'
 #awsSuffix: amazonaws.com
 
-# # For China Mainland regions, we should have a R53 domain before deploying service workbench
-# websiteR53Url: https://example.com
+# # For China Mainland regions, we cannot use cloudfront url directly, we should have domain before deploying service workbench
+# websiteUrl: https://example.com
 
 # Set default IDP type
 # value: keycloak/cognito

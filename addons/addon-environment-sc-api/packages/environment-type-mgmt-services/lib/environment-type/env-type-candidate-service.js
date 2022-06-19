@@ -59,10 +59,10 @@ class EnvTypeCandidateService extends Service {
     // ensure that the caller has permissions to list raw environment types (AWS Service Catalog Products not yet imported into "app store")
     // Perform default condition checks to make sure the user is active and is admin
     await this.assertAuthorized(requestContext, { action: 'list', conditions: [allowIfActive, allowIfAdmin] });
-
+    console.log('envTypeCandidateService list, mingtong step 1');
     const filterStatuses = filter.status || [envTypeCandidateStatusEnum.notImported];
     const versionFilter = filter.version || versionFilterEnum.latest;
-
+    console.log('envTypeCandidateService list, mingtong step 2');
     // Validate filter
     await this.validateListFilter({ filterStatuses, versionFilter });
 
@@ -70,16 +70,18 @@ class EnvTypeCandidateService extends Service {
     // get service catalog client sdk with the service catalog admin role credentials
     const [aws] = await this.service(['aws']);
     const serviceCatalogClient = await getServiceCatalogClient(aws, this.settings.get(settingKeys.envMgmtRoleArn));
+    console.log('envTypeCandidateService list, mingtong step 3');
     const result = await retry(() =>
       // wrap with retry with exponential backoff in case of throttling errors
       serviceCatalogClient.searchProducts({ SortBy: 'CreationDate', SortOrder: 'DESCENDING' }).promise(),
     );
+    console.log('envTypeCandidateService list, mingtong step 4');
     const products = result.ProductViewSummaries || [];
-
+    console.log('envTypeCandidateService list, mingtong step 5');
     // Find corresponding SC product versions (aka provisioningArtifacts)
     // and translate to env type candidates
     const productEnvTypes = await this.toEnvTypeCandidates(serviceCatalogClient, products, versionFilter);
-
+    console.log('envTypeCandidateService list, mingtong step 6');
     // The productEnvTypes is an array with the following shape
     // [
     //   [env type for product 1 v1,  env type for product 1 v2, ...]
@@ -89,16 +91,17 @@ class EnvTypeCandidateService extends Service {
     //
     // Flatten this to return one array containing candidate env types for all versions
     const envTypeCandidates = _.flatten(productEnvTypes);
-
+    console.log('envTypeCandidateService list, mingtong step 7');
     const includeAll = _.includes(filterStatuses, '*');
     if (includeAll) {
       // if asked to return all then no need to do any further filtering
       // return all env type candidates
       return envTypeCandidates;
     }
-
+    console.log('envTypeCandidateService list, mingtong step 8');
     // Find a subset of the envTypeCandidates that have not been imported yet in the system
     const notImportedCandidates = await this.findNotImported(requestContext, envTypeCandidates);
+    console.log('envTypeCandidateService list, mingtong step 9');
     return notImportedCandidates;
   }
 

@@ -410,6 +410,8 @@ class CheckLaunchDependency extends StepBase {
    * @returns {Promise<{Value: string, Key: string}[]>}
    */
   async resolveVarExpressions(keyValuePairs, resolvedVars) {
+    console.log('resolveVarExpressions mingtong step keyValuePairs:', keyValuePairs);
+    console.log('resolveVarExpressions mingtong step resolvedVars:', resolvedVars);
     const resolved = _.map(keyValuePairs, p => {
       const compiledKey = _.template(p.key);
       const resolvedKey = compiledKey(resolvedVars);
@@ -421,6 +423,7 @@ class CheckLaunchDependency extends StepBase {
         Value: resolvedValue,
       };
     });
+    console.log('resolveVarExpressions mingtong step resolved:', resolved);
     return resolved;
   }
 

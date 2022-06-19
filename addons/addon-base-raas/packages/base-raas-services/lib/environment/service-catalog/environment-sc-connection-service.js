@@ -22,7 +22,8 @@ const Service = require('@amzn/base-services-container/lib/service');
 const { retry, linearInterval } = require('@amzn/base-services/lib/helpers/utils');
 const sshConnectionInfoSchema = require('../../schema/ssh-connection-info-sc');
 const { connectionScheme } = require('./environment-sc-connection-enum');
-const { cfnOutputsToConnections } = require('./helpers/connections-util');
+const { cfnOutputsToConnections, cfnOutputsArrayToObject } = require('./helpers/connections-util');
+const axios = require('axios').default;
 
 // Webpack messes with the fetch function import and it breaks in lambda.
 if (typeof fetch !== 'function' && fetch.default && typeof fetch.default === 'function') {
@@ -30,7 +31,9 @@ if (typeof fetch !== 'function' && fetch.default && typeof fetch.default === 'fu
 }
 
 const settingKeys = {
+  awsRegion: 'awsRegion',
   restrictAdminWorkspaceConnection: 'restrictAdminWorkspaceConnection',
+  noEc2ConnectRegions: 'noEc2ConnectRegions',
 };
 
 class EnvironmentScConnectionService extends Service {
@@ -104,9 +107,9 @@ class EnvironmentScConnectionService extends Service {
 
     // TODO: Handle case when connection is about an auto scaling group instead of specific instance
     const result = await cfnOutputsToConnections(outputs);
-
+    console.log('listConnections mingtong step, result: ', result);
     // Give plugins chance to adjust the connection (such as connection url etc)
-    const adjustedConnections = await Promise.all(
+    let adjustedConnections = await Promise.all(
       _.map(result, async connection => {
         // This is done so that plugins know it was called during list connections cycle
         connection.operation = 'list';
@@ -122,10 +125,18 @@ class EnvironmentScConnectionService extends Service {
           },
           { requestContext, container: this.container },
         );
-
+        console.log('createConnectionUrl mingtong step, pluginsResult: ', pluginsResult);
         return _.get(pluginsResult, 'connection', connection);
       }),
     );
+    console.log('listConnections mingtong step, adjustedConnections: ', adjustedConnections);
+    const noEc2ConnectRegionList = this.settings.optionalObject('noEc2ConnectRegions', []);
+    adjustedConnections = adjustedConnections.filter((connect) => {
+      if (connect.scheme === 'ssh' && noEc2ConnectRegionList.indexOf(region)) {
+          return false;
+      }
+      return true;
+    });
     return adjustedConnections;
   }
 
@@ -159,6 +170,7 @@ class EnvironmentScConnectionService extends Service {
   }
 
   async createConnectionUrl(requestContext, envId, connectionId) {
+    console.log('createConnectionUrl mingtong step start connect, connectionId: ', connectionId);
     const [environmentScService, pluginRegistryService] = await this.service([
       'environmentScService',
       'pluginRegistryService',
@@ -170,14 +182,15 @@ class EnvironmentScConnectionService extends Service {
 
     // Write audit event
     await this.audit(requestContext, { action: 'env-presigned-url-requested', body: { id: envId, connection } });
-
+    console.log('createConnectionUrl mingtong step connection: ', connection);
     if (!_.isEmpty(connection.url)) {
       // if connection already has url then just return it
       return connection;
     }
 
     // Verify environment is linked to an AppStream project when application has AppStream enabled
-    const { projectId } = await environmentScService.mustFind(requestContext, { id: envId });
+    const { outputs, projectId } = await environmentScService.mustFind(requestContext, { id: envId });
+    console.log("createConnectionUrl mingtong step projectId: ", projectId);
     await environmentScService.verifyAppStreamConfig(requestContext, projectId);
 
     if (_.toLower(_.get(connection, 'type', '')) === 'sagemaker') {
@@ -194,6 +207,22 @@ class EnvironmentScConnectionService extends Service {
 
       connection.url = _.get(sageMakerResponse, 'AuthorizedUrl');
     }
+
+    // if (_.toLower(_.get(connection, 'type', '')) === 'ec2-linux') {
+    //   console.log("createConnectionUrl mingtong step start ec2-linux");
+    //   const [aws] = await this.service(['aws']);
+
+    //   const { WorkspaceSSMRoleArn, Ec2WorkspaceInstanceId, SessionDuration } = cfnOutputsArrayToObject(outputs);
+
+    //   const { accessKeyId, secretAccessKey, sessionToken } = await aws.getCredentialsForRole({roleArn: WorkspaceSSMRoleArn});
+
+    //   console.log('createConnectionUrl mingtong step accessKeyId: ', accessKeyId);
+
+    //   // mingtong TODO
+    //   // role token, region, instance id
+
+    //   connection.url = await this.generateSigninSSMConsoleLink(accessKeyId, secretAccessKey, sessionToken, Ec2WorkspaceInstanceId, SessionDuration);
+    // }    
 
     if (
       _.toLower(_.get(connection, 'type', '')) === 'rstudio' ||
@@ -219,6 +248,105 @@ class EnvironmentScConnectionService extends Service {
 
     return _.get(result, 'connection') || connection;
   }
+
+  async createConnectionSSMUrl(requestContext, envId, connectionId) {
+    console.log('createConnectionUrl mingtong step start connect, connectionId: ', connectionId);
+    const [environmentScService, pluginRegistryService] = await this.service([
+      'environmentScService',
+      'pluginRegistryService',
+    ]);
+
+    // The following will succeed only if the user has permissions to access the specified environment
+    // and connection
+    const connection = await this.mustFindConnection(requestContext, envId, connectionId);
+
+    // Write audit event
+    await this.audit(requestContext, { action: 'env-presigned-url-requested', body: { id: envId, connection } });
+    console.log('createConnectionUrl mingtong step connection: ', connection);
+    if (!_.isEmpty(connection.url)) {
+      // if connection already has url then just return it
+      return connection;
+    }
+
+    // Verify environment is linked to an AppStream project when application has AppStream enabled
+    const { outputs, projectId } = await environmentScService.mustFind(requestContext, { id: envId });
+    console.log("createConnectionUrl mingtong step projectId: ", projectId);
+
+      console.log("createConnectionUrl mingtong step start ec2-linux");
+      const [aws] = await this.service(['aws']);
+
+      const { WorkspaceSSMRoleArn, Ec2WorkspaceInstanceId, SessionDuration } = cfnOutputsArrayToObject(outputs);
+
+      const { accessKeyId, secretAccessKey, sessionToken } = await aws.getCredentialsForRole({roleArn: WorkspaceSSMRoleArn});
+
+      console.log('createConnectionUrl mingtong step accessKeyId: ', accessKeyId);
+      console.log('createConnectionUrl mingtong step accessKeyId: ', secretAccessKey);
+      console.log('createConnectionUrl mingtong step accessKeyId: ', sessionToken);
+
+      // mingtong TODO
+      // role token, region, instance id
+
+      connection.url = await this.generateSigninSSMConsoleLink(accessKeyId, secretAccessKey, sessionToken, Ec2WorkspaceInstanceId, SessionDuration);
+
+    // This is done so that plugins know it was called during create URL cycle
+    connection.operation = 'create';
+    // Give plugins chance to adjust the connection (such as connection url etc)
+    const result = await pluginRegistryService.visitPlugins(
+      'env-sc-connection-url',
+      'createConnectionUrl',
+      {
+        payload: {
+          envId,
+          connection,
+        },
+      },
+      { requestContext, container: this.container },
+    );
+
+    return _.get(result, 'connection') || connection;
+  }  
+
+  async generateSigninSSMConsoleLink(accessKeyId, secretAccessKey, sessionToken, instanceId, inputSessionDuration) {
+    const session = {'sessionId': accessKeyId,
+      'sessionKey': secretAccessKey,
+      'sessionToken': sessionToken};
+
+    let sessionDuration = 3600; //default session duration, 1 hour
+    if (Number(inputSessionDuration) > 0) {
+      sessionDuration = Number(inputSessionDuration);
+    }
+    const params={'Action': 'getSigninToken',
+      'SessionDuration': sessionDuration,
+      'Session': session};
+
+    console.log('generateSigninSSMConsoleLink mingtong step, params: ', params);
+
+    const region = this.settings.get(settingKeys.awsRegion);      
+
+    let consoleDomainSuffix;
+    if (region.startsWith('cn-')) {
+      consoleDomainSuffix = 'amazonaws.cn';
+    } else {
+      consoleDomainSuffix = 'aws.amazon.com';
+    }
+
+    const getSigninTokenURL = `https://${region}.signin.${consoleDomainSuffix}/federation`;
+
+    console.log('generateSigninSSMConsoleLink mingtong step getSigninTokenURL: ', {getSigninTokenURL});
+    const response = await axios.get(getSigninTokenURL, {params});
+
+    console.log('generateSigninSSMConsoleLink mingtong step, response: ', response);
+
+    const signinToken = response.data.SigninToken;
+
+    console.log('generateSigninSSMConsoleLink mingtong step signinToken: ', signinToken);
+
+    const ssmConsoleUrl = `https://${region}.signin.${consoleDomainSuffix}/federation?Action=login&Issuer=Instruqt&Destination=https://${region}.console.${consoleDomainSuffix}/systems-manager/session-manager/${instanceId}?region=${region}&SigninToken=${signinToken}`;
+
+    console.log('generateSigninSSMConsoleLink mingtong step ssmConsoleUrl: ', ssmConsoleUrl);
+
+    return ssmConsoleUrl;
+}  
 
   async getRStudioUrl(requestContext, id, connection) {
     if (_.toLower(_.get(connection, 'type', '')) === 'rstudio')

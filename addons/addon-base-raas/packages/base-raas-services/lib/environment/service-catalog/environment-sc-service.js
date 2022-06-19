@@ -1162,6 +1162,35 @@ class EnvironmentScService extends Service {
     return aws.getClientSdkForRole({ roleArn: xAccEnvMgmtRoleArn, externalId, clientName, options });
   }
 
+  async getCredentialWithEnvMgmtRole(requestContext, { id }, { options }) {
+    const [aws] = await this.service(['aws']);
+    console.log('getCredentialWithEnvMgmtRole mingtong step, id: ', id);
+    const { indexId } = await this.mustFind(requestContext, {
+      id,
+      fields: ['indexId', 'createdBy'],
+    });
+    const { xAccEnvMgmtRoleArn, externalId } = await this.getEnvMgmtRoleInfoForIndex(requestContext, indexId);
+
+    console.log('getCredentialWithEnvMgmtRole mingtong step, xAccEnvMgmtRoleArn: ', xAccEnvMgmtRoleArn);
+
+    return aws.getCredentialsForRole({roleArn: xAccEnvMgmtRoleArn, externalId});
+  }  
+
+  //TODO mingtong step
+  async getCredentialWithEC2SSMRole(requestContext, { id }, { options }) {
+    const [aws] = await this.service(['aws']);
+    console.log('getCredentialWithEnvMgmtRole mingtong step, id: ', id);
+    const { indexId } = await this.mustFind(requestContext, {
+      id,
+      fields: ['indexId', 'createdBy'],
+    });
+    const { xAccEnvMgmtRoleArn, externalId } = await this.getEnvMgmtRoleInfoForIndex(requestContext, indexId);
+
+    console.log('getCredentialWithEnvMgmtRole mingtong step, xAccEnvMgmtRoleArn: ', xAccEnvMgmtRoleArn);
+
+    return aws.getCredentialsForRole({roleArn: xAccEnvMgmtRoleArn, externalId});
+  }   
+
   async getEnvMgmtRoleInfoForIndex(requestContext, indexId) {
     const [indexesService, awsAccountsService] = await this.service(['indexesService', 'awsAccountsService']);
     const { awsAccountId } = await indexesService.mustFind(requestContext, { id: indexId });

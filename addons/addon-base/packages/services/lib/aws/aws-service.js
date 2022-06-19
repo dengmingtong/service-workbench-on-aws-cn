@@ -91,7 +91,7 @@ class AwsService extends Service {
    * @returns {Promise<{accessKeyId, secretAccessKey, sessionToken}>}
    */
   async getCredentialsForRole({ roleArn, roleSessionName, externalId }) {
-    console.log('getCredentialsForRole mingtong step 1');
+    console.log('getCredentialsForRole mingtong step 1, roleArn: ', roleArn);
     const awsRegion = this.settings.get(settingKeys.awsRegion);
     console.log('getCredentialsForRole mingtong step 1-1, awsRegion', awsRegion);
     const awsSuffix = this.awsSuffix;

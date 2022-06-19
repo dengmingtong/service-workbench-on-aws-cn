@@ -428,6 +428,7 @@ importers:
       '@amzn/base-services': link:../../../addon-base/packages/services
       '@amzn/base-services-container': link:../../../addon-base/packages/services-container
       '@amzn/key-pair-mgmt-services': link:../../../addon-key-pair-mgmt-api/packages/key-pair-mgmt-services
+      axios: 0.21.4
       is-cidr: 3.1.0
       js-yaml: 4.0.0
       lodash: 4.17.21
@@ -469,6 +470,7 @@ importers:
       '@amzn/environment-type-mgmt-services': workspace:*
       '@amzn/key-pair-mgmt-services': workspace:*
       aws-sdk-mock: ^5.1.0
+      axios: ^0.21.2
       eslint: ^6.8.0
       eslint-config-airbnb-base: ^14.1.0
       eslint-config-prettier: ^6.10.0
@@ -8702,7 +8704,7 @@ packages:
       integrity: sha512-fjgm5MvRHLhx+osE2xoekY70AhARk3a6hkN+3Io1jc00jtquGvxYlKlsFUhmUET0V5te6CcZI7lcv2Ym61mjHA==
   /axios/0.21.4:
     dependencies:
-      follow-redirects: 1.14.9_debug@4.3.1
+      follow-redirects: 1.14.9
     dev: false
     resolution:
       integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==
@@ -13893,9 +13895,21 @@ packages:
     dev: true
     resolution:
       integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==
+  /follow-redirects/1.14.9:
+    dev: false
+    engines:
+      node: '>=4.0'
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+    resolution:
+      integrity: sha512-MQDfihBQYMcyy5dhRDJUHcw7lb2Pv/TuE6xP1vyraLukNDHKbDxDNaOE3NbCAdKQApno+GPRyo1YAp89yCjK4w==
   /follow-redirects/1.14.9_debug@4.3.1:
     dependencies:
       debug: 4.3.1_supports-color@6.1.0
+    dev: true
     engines:
       node: '>=4.0'
     peerDependencies:

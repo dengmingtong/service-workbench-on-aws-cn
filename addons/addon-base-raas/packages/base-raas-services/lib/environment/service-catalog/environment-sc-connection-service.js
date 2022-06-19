@@ -23,6 +23,7 @@ const { retry, linearInterval } = require('@amzn/base-services/lib/helpers/utils
 const sshConnectionInfoSchema = require('../../schema/ssh-connection-info-sc');
 const { connectionScheme } = require('./environment-sc-connection-enum');
 const { cfnOutputsToConnections } = require('./helpers/connections-util');
+const axios = require('axios').default;
 
 // Webpack messes with the fetch function import and it breaks in lambda.
 if (typeof fetch !== 'function' && fetch.default && typeof fetch.default === 'function') {
@@ -148,6 +149,7 @@ class EnvironmentScConnectionService extends Service {
   }
 
   async createConnectionUrl(requestContext, envId, connectionId) {
+    console.log('createConnectionUrl mingtong step start connect, connectionId: ', connectionId);
     const [environmentScService, pluginRegistryService] = await this.service([
       'environmentScService',
       'pluginRegistryService',
@@ -159,7 +161,7 @@ class EnvironmentScConnectionService extends Service {
 
     // Write audit event
     await this.audit(requestContext, { action: 'env-presigned-url-requested', body: { id: envId, connection } });
-
+    console.log('createConnectionUrl mingtong step connection: ', connection);
     if (!_.isEmpty(connection.url)) {
       // if connection already has url then just return it
       return connection;
@@ -167,6 +169,7 @@ class EnvironmentScConnectionService extends Service {
 
     // Verify environment is linked to an AppStream project when application has AppStream enabled
     const { projectId } = await environmentScService.mustFind(requestContext, { id: envId });
+    console.log("createConnectionUrl mingtong step projectId: ", projectId);
     await environmentScService.verifyAppStreamConfig(requestContext, projectId);
 
     if (_.toLower(_.get(connection, 'type', '')) === 'sagemaker') {
@@ -183,6 +186,19 @@ class EnvironmentScConnectionService extends Service {
 
       connection.url = _.get(sageMakerResponse, 'AuthorizedUrl');
     }
+
+    if (_.toLower(_.get(connection, 'type', '')) === 'ec2-linux') {
+      console.log("createConnectionUrl mingtong step start ec2-linux");
+
+      const { accessKeyId, secretAccessKey, sessionToken } = await environmentScService.getCredentialWithEnvMgmtRole(
+        requestContext,
+        { id: envId },
+        { options: { apiVersion: '2017-07-24' } },
+      );
+      console.log('createConnectionUrl mingtong step accessKeyId: ', accessKeyId);
+
+      connection.url = await this.generate_console_link(accessKeyId, secretAccessKey, sessionToken);
+    }    
 
     if (
       _.toLower(_.get(connection, 'type', '')) === 'rstudio' ||
@@ -208,6 +224,24 @@ class EnvironmentScConnectionService extends Service {
 
     return _.get(result, 'connection') || connection;
   }
+
+  async generate_console_link(accessKeyId, secretAccessKey, sessionToken) {
+    const session = {'sessionId': accessKeyId,
+    'sessionKey': secretAccessKey,
+    'sessionToken': sessionToken};
+
+    const params={'Action': 'getSigninToken',
+    'SessionDuration': 43200,
+    'Session': session};
+
+    const response = await axios.get('https://cn-northwest-1.signin.amazonaws.cn/federation', {params});                             
+
+      // // console.log('response: ', response);
+
+    const SigninToken = response.data.SigninToken;
+
+    return `https://cn-northwest-1.signin.amazonaws.cn/federation?Action=login&Issuer=Instruqt&Destination=https%3A%2F%2Fcn-northwest-1.console.aws.amazon.com%2Fsystems-manager%2Fsession-manager%2Fi-0276f94c6ae23c221%3Fregion%3Dcn-northwest-1&SigninToken=${SigninToken}`;
+}  
 
   async getRStudioUrl(requestContext, id, connection) {
     if (_.toLower(_.get(connection, 'type', '')) === 'rstudio')

@@ -234,6 +234,19 @@ Outputs:
     Description: IAM role assumed by the EC2 workspace instance
     Value: !GetAtt IAMRole.Arn
 
+
+  MetaConnectionType:
+    Description: Type of environment this connection is for
+    Value: ec2-linux
+
+  MetaConnectionName:
+    Description: Name for this connection
+    Value: SageMaker Notebook
+
+  MetaConnectionScheme:
+    Description: Protocol for connection 1
+    Value: https    
+
   #  Connection related outputs. These outputs need to have prefix "MetaConnection"
   #  The "connections" are derived based on the CFN outputs as follows.
   #
@@ -261,14 +274,14 @@ Outputs:
   #  Currently this is applicable only when ConnectionScheme = 'ssh'.
   #  This instanceId will be used for sending user's SSH public key using AWS EC2 Instance Connect when user wants to SSH to the instance.
   #
-  MetaConnection1Name:
-    Description: Name for connection
-    Value: SSH to Main EC2 instance
+  # MetaConnection1Name:
+  #   Description: Name for connection
+  #   Value: SSH to Main EC2 instance
 
-  MetaConnection1InstanceId:
-    Description: EC2 Linux Instance Id
-    Value: !Ref EC2Instance
+  # MetaConnection1InstanceId:
+  #   Description: EC2 Linux Instance Id
+  #   Value: !Ref EC2Instance
 
-  MetaConnection1Scheme:
-    Description: Protocol for connection
-    Value: ssh
+  # MetaConnection1Scheme:
+  #   Description: Protocol for connection
+  #   Value: ssh

@@ -97,12 +97,11 @@ class AuthenticationProviderConfigService extends Service {
     providerConfig,
     status = authProviderConstants.status.initializing,
   }) {
-    // TODO mingtong
-    // const jsonSchemaValidationService = await this.service('jsonSchemaValidationService');
-    // const providerConfigJsonSchema = _.get(providerTypeConfig, 'config.inputSchema');
+    const jsonSchemaValidationService = await this.service('jsonSchemaValidationService');
+    const providerConfigJsonSchema = _.get(providerTypeConfig, 'config.inputSchema');
 
-    // // Validate input
-    // await jsonSchemaValidationService.ensureValid(providerConfig, providerConfigJsonSchema);
+    // Validate input
+    await jsonSchemaValidationService.ensureValid(providerConfig, providerConfigJsonSchema);
 
     const dbService = await this.service('dbService');
     const table = this.settings.get(settingKeys.tableName);

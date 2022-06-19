@@ -503,6 +503,48 @@ describe('EnvironmentScConnectionService', () => {
       expect(retConn).toBe(connection);
     });
 
+    it('should return ssm connection', async () => {
+      // BUILD
+      const connection = { info: 'This is ssm connection' };
+      service.mustFindConnection = jest.fn(() => connection);
+
+      envScService.mustFind = jest.fn(() => {
+        return {
+          outputs: {
+            WorkspaceSSMRoleArn: 'WorkspaceSSMRoleArn',
+            Ec2WorkspaceInstanceId: 'WorkspEc2WorkspaceInstanceIdaceSSMRoleArn',
+            SessionDuration: 3599,
+          },
+        };
+      });
+      const aws = await service.service('aws');
+      aws.getCredentialsForRole = jest.fn(() => {
+        return {
+          accessKeyId: 'accessKeyId',
+          secretAccessKey: 'secretAccessKey',
+          sessionToken: 'sessionToken',
+        };
+      });
+
+      service.generateSigninSSMConsoleLink = jest.fn(
+        () =>
+          'https://us-east-1.signin.aws.amazon.com/federation?Action=login&Issuer=Instruqt&Destination=https://us-east-1.console.aws.amazon.com/systems-manager/session-manager/i-xxx?region=us-east-1&SigninToken=xxx',
+      );
+
+      const expectConnection = {
+        url:
+          'https://us-east-1.signin.aws.amazon.com/federation?Action=login&Issuer=Instruqt&Destination=https://us-east-1.console.aws.amazon.com/systems-manager/session-manager/i-xxx?region=us-east-1&SigninToken=xxx',
+        info: 'This is ssm connection',
+        operation: 'create',
+      };
+
+      // OPERATE
+      const retConn = await service.createConnectionSSMUrl();
+
+      // CHECK
+      expect(retConn).toMatchObject(expectConnection);
+    });
+
     it('should get RStudio connection URL for RStudio connection types', async () => {
       // BUILD
       const connection = { type: 'RStudio' };

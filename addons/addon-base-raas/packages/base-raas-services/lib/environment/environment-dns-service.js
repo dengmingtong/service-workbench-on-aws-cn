@@ -63,7 +63,6 @@ class EnvironmentDnsService extends Service {
   async changeRecordSet(action, prefix, id, publicDnsName) {
     const aws = await this.service('aws');
     const route53Client = new aws.sdk.Route53();
-    
     const hostedZoneId = this.settings.get(settingKeys.hostedZoneId);
     const subdomain = this.getHostname(prefix, id);
     await this.changeResourceRecordSets(route53Client, hostedZoneId, action, subdomain, 'CNAME', publicDnsName);

@@ -59,10 +59,8 @@ class EnvTypeCandidateService extends Service {
     // ensure that the caller has permissions to list raw environment types (AWS Service Catalog Products not yet imported into "app store")
     // Perform default condition checks to make sure the user is active and is admin
     await this.assertAuthorized(requestContext, { action: 'list', conditions: [allowIfActive, allowIfAdmin] });
-
     const filterStatuses = filter.status || [envTypeCandidateStatusEnum.notImported];
     const versionFilter = filter.version || versionFilterEnum.latest;
-
     // Validate filter
     await this.validateListFilter({ filterStatuses, versionFilter });
 
@@ -75,11 +73,9 @@ class EnvTypeCandidateService extends Service {
       serviceCatalogClient.searchProducts({ SortBy: 'CreationDate', SortOrder: 'DESCENDING' }).promise(),
     );
     const products = result.ProductViewSummaries || [];
-
     // Find corresponding SC product versions (aka provisioningArtifacts)
     // and translate to env type candidates
     const productEnvTypes = await this.toEnvTypeCandidates(serviceCatalogClient, products, versionFilter);
-
     // The productEnvTypes is an array with the following shape
     // [
     //   [env type for product 1 v1,  env type for product 1 v2, ...]
@@ -89,14 +85,12 @@ class EnvTypeCandidateService extends Service {
     //
     // Flatten this to return one array containing candidate env types for all versions
     const envTypeCandidates = _.flatten(productEnvTypes);
-
     const includeAll = _.includes(filterStatuses, '*');
     if (includeAll) {
       // if asked to return all then no need to do any further filtering
       // return all env type candidates
       return envTypeCandidates;
     }
-
     // Find a subset of the envTypeCandidates that have not been imported yet in the system
     const notImportedCandidates = await this.findNotImported(requestContext, envTypeCandidates);
     return notImportedCandidates;

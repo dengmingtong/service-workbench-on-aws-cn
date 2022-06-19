@@ -22,6 +22,7 @@ import {
   sendSshKey,
   getWindowsRpInfo,
   createScEnvironmentConnectionUrl,
+  createScEnvironmentSSMConnectionUrl,
 } from '../../helpers/api';
 
 // ==================================================================
@@ -48,6 +49,11 @@ const ScEnvConnectionStore = BaseStore.named('ScEnvConnectionStore')
         const urlObj = await createScEnvironmentConnectionUrl(self.envId, connectionId);
         return urlObj;
       },
+
+      async createSSMConnectionUrl(connectionId) {
+        const urlObj = await createScEnvironmentSSMConnectionUrl(self.envId, connectionId);
+        return urlObj;
+      },      
 
       async sendSshKey(connectionId, keyPairId) {
         return sendSshKey(self.envId, connectionId, keyPairId);

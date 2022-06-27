@@ -19,6 +19,7 @@ import ReactDOM from 'react-dom';
 import { Provider } from 'mobx-react';
 import { BrowserRouter } from 'react-router-dom';
 import { Message, Icon, Container } from 'semantic-ui-react';
+import i18next from './i18n'
 
 // Render the AppContainer component which will then ask plugins to provide the App component
 function renderAppContainer(AppContainer, appContext) {
@@ -36,17 +37,19 @@ function renderAppContainer(AppContainer, appContext) {
 function renderProgress(
   progressContent = (
     <Message.Content>
-      <Message.Header>Just one second</Message.Header>
+      <Message.Header>{i18next.t('description')}</Message.Header>
       Great things are now happening, please wait!
     </Message.Content>
   ),
 ) {
   ReactDOM.render(
     <Container text className="pt4">
-      <Message icon>
-        <Icon name="circle notched" loading />
-        {progressContent}
-      </Message>
+      <React.Suspense fallback="loading">
+        <Message icon>
+          <Icon name="circle notched" loading />
+          {progressContent}
+        </Message>
+      </React.Suspense>
     </Container>,
     document.getElementById('root'),
   );

@@ -32,6 +32,10 @@
     "toastr": "^2.1.4",
     "typeface-lato": "0.0.75",
     "uuid": "^3.4.0",
+    "i18next": "^21.8.10",
+    "react-i18next": "^11.17.2",
+    "i18next-browser-languagedetector": "^6.1.4",
+    "i18next-http-backend": "^1.4.1",
     "parse-url": "^5.0.8",
     "validatorjs": "^3.18.1"
   },

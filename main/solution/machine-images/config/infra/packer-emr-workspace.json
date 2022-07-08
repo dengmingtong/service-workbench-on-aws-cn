@@ -20,10 +20,12 @@
       "source_ami_filter": {
         "filters": {
           "virtualization-type": "hvm",
-          "name": "amzn-ami-hvm-*-x86_64-ebs",
+          "name": "amzn2-ami-kernel-5.10-hvm-*-x86_64-gp2",
           "root-device-type": "ebs"
         },
-        "owners": ["amazon"],
+        "owners": [
+          "amazon"
+        ],
         "most_recent": true
       },
       "instance_type": "t2.medium",
@@ -34,7 +36,7 @@
   "provisioners": [
     {
       "type": "shell",
-      "script": "./config/infra/provisioners/provision-hail.sh"
+      "script": "./config/infra/provisioners/provision-hail-changed.sh"
     }
   ]
 }

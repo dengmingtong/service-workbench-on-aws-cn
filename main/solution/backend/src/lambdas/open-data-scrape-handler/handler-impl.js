@@ -89,7 +89,7 @@ const newHandler = async ({ studyService, log = consoleLogger } = {}) => {
       const normalizedValue = normalizeValue(value);
       return { ...result, [normalizedKey]: normalizedValue };
     }, {});
-
+    log.info('normalizeKeys mingtong step normalized: ', normalized);
     return normalized;
   }
 
@@ -161,17 +161,29 @@ const newHandler = async ({ studyService, log = consoleLogger } = {}) => {
   }
 
   async function fetchFile({ url, id, sha }) {
-    const res = await fetch(url);
+    log.info('fetchFile mingtong step url: ', url);
+    let res;
+    try {
+      res = await fetch(url);
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch ${url}`);
-    }
+      log.info('fetchFile mingtong step res: ', res);
+      if (!res.ok) {
+        log.info('fetchFile mingtong step error res: ', res);
+        log.info('fetchFile mingtong step error url: ', url);
+        // throw new Error(`Failed to fetch ${url}`);
+      }
 
-    const text = await res.text();
+      const text = await res.text();
+      log.info('fetchFile mingtong step text: ', text);
 
-    const doc = yaml.safeLoad(text, { filename: url });
+      const doc = yaml.safeLoad(text, { filename: url });
+      log.info('fetchFile mingtong step doc: ', doc);
 
-    return normalizeKeys({ ...doc, id, sha });
+      return normalizeKeys({ ...doc, id, sha });
+    } catch (error) {
+      log.info('fetchFile mingtong step url error: ', url);
+      log.info('fetchFile mingtong step url error: ', error);
+    }    
   }
 
   function basicProjection({ id, sha, name, description, resources }) {
@@ -190,7 +202,11 @@ const newHandler = async ({ studyService, log = consoleLogger } = {}) => {
 
 const fetchOpenData = async ({ fileUrls, requiredTags, log, fetchFile }) => {
   log.info(`Fetching ${fileUrls.length} metadata files`);
+  log.info('fetchOpenData mingtong step fileUrls: ', fileUrls);
+  log.info('fetchOpenData mingtong step fetchFile: ', fetchFile);
   const metadata = await Promise.all(fileUrls.map(fetchFile));
+
+  log.info('fetchOpenData mingtong step metadata: ', metadata);
 
   log.info(`Filtering for ${requiredTags} tags and resources with valid ARNs`);
   const validS3Arn = new RegExp(/^arn:aws:s3:.*:.*:.+$/);
@@ -198,6 +214,7 @@ const fetchOpenData = async ({ fileUrls, requiredTags, log, fetchFile }) => {
     return (
       requiredTags.some(filterTag => tags.includes(filterTag)) &&
       resources.every(resource => {
+        log.info('fetchOpenData mingtong step resource: ', resource);
         return resource.type === 'S3 Bucket' && validS3Arn.test(resource.arn);
       })
     );
@@ -231,7 +248,7 @@ async function saveOpenData(log, simplified, studyService) {
 }
 
 const fetchAndSaveOpenData = async (fetchDatasetFiles, scrape, log, fetchFile, basicProjection, studyService) => {
-  const fileUrls = await fetchDatasetFiles();
+  const fileUrls = await fetchDatasetFiles(); 
   const openData = await fetchOpenData({ fileUrls, requiredTags: scrape.filterTags, log, fetchFile });
 
   const simplifiedStudyData = openData.map(basicProjection);

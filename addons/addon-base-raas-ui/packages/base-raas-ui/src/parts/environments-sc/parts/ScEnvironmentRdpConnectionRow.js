@@ -187,7 +187,7 @@ class ScEnvironmentRdpConnectionRow extends React.Component {
         <Table.Row key={`${item.id}__2`}>
           <Table.Cell className="p3">
             <b>
-              Your Windows workspace can be accessed via an RDP client by using the DNS host name and credentials
+              Your Windows workspace can be accessed via browser by using the DNS host name and credentials
               defined below.
             </b>
             <List bulleted>

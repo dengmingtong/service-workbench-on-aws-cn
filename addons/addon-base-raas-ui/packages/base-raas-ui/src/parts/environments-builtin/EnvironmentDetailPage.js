@@ -526,7 +526,7 @@ class EnvironmentDetailPage extends React.Component {
     return (
       <>
         <p>
-          Your Windows workspace can be accessed via an RDP client by using the DNS host name and credentials defined
+          Your Windows workspace can be accessed via an browser by using the DNS host name and credentials defined
           defined below.
         </p>
 

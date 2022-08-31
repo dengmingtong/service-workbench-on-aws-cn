@@ -632,8 +632,8 @@ class EnvironmentScConnectionService extends Service {
     const networkInterfaces = _.get(instanceInfo, 'NetworkInterfaces') || [];
     const networkInterfacesTransformed = _.map(networkInterfaces, ni => {
       return {
-        publicDnsName: _.get(ni, 'Association.PublicDnsName'),
-        publicIp: _.get(ni, 'Association.PublicIp'),
+        publicDnsName: `https://${_.get(ni, 'Association.PublicDnsName')}:8443`,
+        publicIp: `https://${_.get(ni, 'Association.PublicIp')}:8443`,
         privateDnsName: _.get(ni, 'PrivateDnsName'),
         privateIp: _.get(ni, 'PrivateIpAddress'),
       };

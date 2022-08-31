@@ -71,7 +71,7 @@ class ScEnvironmentRdpConnections extends React.Component {
         <Table celled>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell colSpan="1">RDP Connections</Table.HeaderCell>
+              <Table.HeaderCell colSpan="1">DCV Connections</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>

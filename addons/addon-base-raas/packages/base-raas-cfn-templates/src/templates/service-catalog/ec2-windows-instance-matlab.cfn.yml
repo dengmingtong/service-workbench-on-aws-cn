@@ -334,6 +334,10 @@ Resources:
           $uri = [System.Uri]"${EnvironmentInstanceFiles}"
           $key = "$($uri.AbsolutePath.Substring(1))/bin/s3-synchronizer-windows-amd64.exe"
           Read-S3Object -Region "${AWS::Region}" -BucketName $uri.Host -Key $key -File s3-synchronizer.exe
+          $keymatlab = "$($uri.AbsolutePath.Substring(1))/MATLAB_Runtime_R2022a_Update_5_win64.zip"
+          Read-S3Object -Region "${AWS::Region}" -BucketName $uri.Host -Key $keymatlab -File MATLAB_Runtime_R2022a_Update_5_win64.zip
+          $keyInstallMatlabScript = "$($uri.AbsolutePath.Substring(1))/installMatlabScript.ps1"
+          Read-S3Object -Region "${AWS::Region}" -BucketName $uri.Host -Key $keyInstallMatlabScript -File installMatlabScript.ps1
           '@
           Set-Content -Path C:\workdir\download-s3-synchronizer.ps1 -Value $downloadS3Synchronizer
 
@@ -359,7 +363,29 @@ Resources:
           # Source the script to start the s3 synchronizer process
           ."c:\workdir\start-s3-synchronizer.ps1"
 
+          Invoke-RestMethod -Uri https://github.com/PSAppDeployToolkit/PSAppDeployToolkit/releases/download/3.8.4/PSAppDeployToolkit_v3.8.4.zip -OutFile "D:\PSAppDeployToolkit_v3.8.4.zip"
+
+          Unblock-File -Path D:\PSAppDeployToolkit_v3.8.4.zip
+
+          Expand-Archive -LiteralPath D:\PSAppDeployToolkit_v3.8.4.zip -DestinationPath D:\PADT
+
+          Copy-Item -Path "D:\PADT\Toolkit\AppDeployToolkit" -Destination "D:\MATLAB_RT_2022\AppDeployToolkit" -Recurse
+
+          Copy-Item -Path "D:\PADT\Toolkit\Files" -Destination "D:\MATLAB_RT_2022\Files"
+
+          Copy-Item -Path "D:\MATLAB_Runtime_R2022a_Update_5_win64\" D:\MATLAB_RT_2022\Files\ -Recurse
+
+          Expand-Archive -LiteralPath C:\workdir\MATLAB_Runtime_R2022a_Update_5_win64.zip -DestinationPath D:\MATLAB_Runtime_R2022a_Update_5_win64
+
+          Copy-Item -Path "D:\MATLAB_Runtime_R2022a_Update_5_win64\*" D:\MATLAB_RT_2022\Files\ -Recurse
+
+          Copy-Item -Path C:\workdir\installMatlabScript.ps1 D:\MATLAB_RT_2022
+
+          cd D:\MATLAB_RT_2022\
+          ."D:\MATLAB_RT_2022\installMatlabScript.ps1"
+
           cfn-signal.exe -e $lastexitcode --stack ${AWS::StackId} --resource EC2Instance --region ${AWS::Region}
+
           </powershell>
 
 Outputs:

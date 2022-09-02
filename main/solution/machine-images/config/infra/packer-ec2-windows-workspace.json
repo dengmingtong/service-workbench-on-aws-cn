@@ -30,5 +30,11 @@
       "communicator": "none",
       "ami_name": "{{user `ec2WindowsAmiPrefix`}}-{{timestamp}}"
     }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "script": "./config/infra/provisioners/provision-hail.sh"
+    }
   ]
 }

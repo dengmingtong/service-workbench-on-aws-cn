@@ -56,6 +56,11 @@ const productsToCreate = [
     displayName: 'EC2 Windows',
     description: `* An EC2 Windows instance with RDP access \n* Secure compute in the cloud`,
   },
+  {
+    filename: 'ec2-windows-instance-matlab',
+    displayName: 'EC2 Windows Matlab',
+    description: `* An EC2 Windows instance with RDP access \n* Secure compute in the cloud`,
+  },
 ];
 
 const autoCreateVersion = 'v1';

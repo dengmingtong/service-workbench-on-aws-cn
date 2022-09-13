@@ -61,6 +61,7 @@ class UserService extends BaseUserService {
           lastName: _.isEmpty(curUser.lastName) ? name : curUser.lastName,
           username: curUser.email,
           email: curUser.email,
+          projectId: curUser.projectId.split(';'),
           isAdmin,
           userRole: curUser.userRole,
           authenticationProviderId,
@@ -80,7 +81,6 @@ class UserService extends BaseUserService {
             throw this.boom.alreadyExists('Cannot add user. The user already exists.', true);
           }
         }
-
         // Validate user data
         await this.validateCreateUser(requestContext, userToCreate);
 

@@ -43,6 +43,10 @@ class UserTable extends React.Component {
               Header: i18next.t('props.identityProviderName', { ns: 'users' }),
               accessor: 'identityProviderName',
             },
+            {
+              Header: 'project Id',
+              accessor: 'projectId',
+            },
           ]}
           defaultPageSize={5}
           className="-striped -highlight"

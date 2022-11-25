@@ -90,25 +90,25 @@ class EnvironmentAmiService extends Service {
       return;
     }
 
-    const params = {
-      ImageId: imageId,
-      LaunchPermission: {
-        Add: [
-          {
-            UserId: accountId,
-          },
-        ],
-      },
-    };
-    await (async () => {
-      try {
-        const attributes = await this.ec2.modifyImageAttribute(params).promise();
-        return attributes;
-      } catch (err) {
-        this.log.error(err);
-        throw this.boom.badRequest(`Unable to modify permissions on the software image for the selected index.`, true);
-      }
-    })();
+    // const params = {
+    //   ImageId: imageId,
+    //   LaunchPermission: {
+    //     Add: [
+    //       {
+    //         UserId: accountId,
+    //       },
+    //     ],
+    //   },
+    // };
+    // await (async () => {
+    //   try {
+    //     const attributes = await this.ec2.modifyImageAttribute(params).promise();
+    //     return attributes;
+    //   } catch (err) {
+    //     this.log.error(err);
+    //     throw this.boom.badRequest(`Unable to modify permissions on the software image for the selected index.`, true);
+    //   }
+    // })();
   }
 
   async getEc2Sdk() {
